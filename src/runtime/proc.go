@@ -2661,6 +2661,14 @@ func park_m(gp *g) {
 	schedule()
 }
 
+func ParkUnsafe(gp unsafe.Pointer) {
+	park_m((*g) (gp))
+}
+
+func UnparkUnsafe(gp unsafe.Pointer) {
+	goready((*g) (gp), 0)
+}
+
 func goschedImpl(gp *g) {
 	status := readgstatus(gp)
 	if status&^_Gscan != _Grunning {

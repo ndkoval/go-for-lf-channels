@@ -400,6 +400,14 @@ type g struct {
 	gcAssistBytes int64
 }
 
+func SetGParam(gp unsafe.Pointer, param unsafe.Pointer) {
+	((*g) (gp)).param = param
+}
+
+func GetGParam(gp unsafe.Pointer) unsafe.Pointer {
+	return ((*g) (gp)).param
+}
+
 type m struct {
 	g0      *g     // goroutine with scheduling stack
 	morebuf gobuf  // gobuf arg to morestack
