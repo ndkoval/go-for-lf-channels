@@ -388,6 +388,8 @@ type g struct {
 	timer          *timer         // cached timer for time.Sleep
 	selectDone     uint32         // are we participating in a select and did someone win the race?
 
+	kovalParam	   unsafe.Pointer
+	kovalMutex     *mutex
 	// Per-G GC state
 
 	// gcAssistBytes is this G's GC assist credit in terms of
@@ -401,11 +403,23 @@ type g struct {
 }
 
 func SetGParam(gp unsafe.Pointer, param unsafe.Pointer) {
-	((*g) (gp)).param = param
+	((*g) (gp)).kovalParam = param
 }
 
 func GetGParam(gp unsafe.Pointer) unsafe.Pointer {
-	return ((*g) (gp)).param
+	return ((*g) (gp)).kovalParam
+}
+
+func AcqureMutex(gp unsafe.Pointer) {
+	g := (*g) (gp)
+	if g.kovalMutex == nil {
+		g.kovalMutex = &mutex{}
+	}
+	lock(g.kovalMutex)
+}
+
+func ReleaseMutex(gp unsafe.Pointer) {
+	unlock(((*g) (gp)).kovalMutex)
 }
 
 type m struct {

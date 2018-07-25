@@ -17,7 +17,7 @@ func add(p unsafe.Pointer, x uintptr) unsafe.Pointer {
 // that fetch the g directly (from TLS or from the dedicated register).
 func getg() *g
 
-func Getg() unsafe.Pointer {
+func GetGoroutine() unsafe.Pointer {
 	return (unsafe.Pointer) (getg())
 }
 

@@ -2661,12 +2661,16 @@ func park_m(gp *g) {
 	schedule()
 }
 
-func ParkUnsafe(gp unsafe.Pointer) {
-	park_m((*g) (gp))
+func ParkSendAndReleaseUnsafe() {
+	goparkunlock(getg().kovalMutex, waitReasonChanSend, traceEvGoBlockSend, 3)
+}
+
+func ParkReceiveAndReleaseUnsafe() {
+	goparkunlock(getg().kovalMutex, waitReasonChanReceive, traceEvGoBlockRecv, 3)
 }
 
 func UnparkUnsafe(gp unsafe.Pointer) {
-	goready((*g) (gp), 0)
+	goready((*g) (gp), 3)
 }
 
 func goschedImpl(gp *g) {
