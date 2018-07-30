@@ -2662,15 +2662,48 @@ func park_m(gp *g) {
 }
 
 func ParkSendAndReleaseUnsafe() {
-	goparkunlock(getg().kovalMutex, waitReasonChanSend, traceEvGoBlockSend, 3)
+	gp := getg()
+	if atomic.Load(&gp.kovalUnparkState) == 2 {
+		atomic.Store(&gp.kovalUnparkState, 0)
+		return
+	}
+	gopark(parkUnsafeFastPath, nil, waitReasonChanSend, traceEvGoBlockSend, 3)
 }
 
 func ParkReceiveAndReleaseUnsafe() {
-	goparkunlock(getg().kovalMutex, waitReasonChanReceive, traceEvGoBlockRecv, 3)
+	gp := getg()
+	if atomic.Load(&gp.kovalUnparkState) == 2 {
+		atomic.Store(&gp.kovalUnparkState, 0)
+		return
+	}
+	gopark(parkUnsafeFastPath, nil, waitReasonChanReceive, traceEvGoBlockRecv, 3)
+}
+
+func parkUnsafeFastPath(gp *g, lock unsafe.Pointer) bool {
+	if atomic.Load(&gp.kovalUnparkState) == 2 {
+		atomic.Store(&gp.kovalUnparkState, 0)
+		return false
+	}
+	if atomic.Cas(&gp.kovalUnparkState, 0, 1) {
+		return true
+	} else {
+		atomic.Store(&gp.kovalUnparkState, 0)
+		return false
+	}
 }
 
 func UnparkUnsafe(gp unsafe.Pointer) {
-	goready((*g) (gp), 3)
+	g := (*g) (gp)
+	if atomic.Load(&g.kovalUnparkState) == 0 {
+		if atomic.Cas(&g.kovalUnparkState, 0, 2) {
+			return // unparked
+		}
+	}
+	// kovalUnparkState == 1 -- parked
+	//m := (*mutex)(g.kovalMutex)
+	//for m.key != 0 {} // spin until lock is unlocked
+	atomic.Store(&g.kovalUnparkState, 0)
+	goready(g, 3)
 }
 
 func goschedImpl(gp *g) {

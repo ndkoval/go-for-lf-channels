@@ -388,8 +388,9 @@ type g struct {
 	timer          *timer         // cached timer for time.Sleep
 	selectDone     uint32         // are we participating in a select and did someone win the race?
 
-	kovalParam	   unsafe.Pointer
-	kovalMutex     *mutex
+	kovalParam	     unsafe.Pointer
+	//kovalMutex       unsafe.Pointer
+	kovalUnparkState uint32 // 0 -- undefined, 1 -- parked, 2 -- unparked
 	// Per-G GC state
 
 	// gcAssistBytes is this G's GC assist credit in terms of
@@ -410,17 +411,24 @@ func GetGParam(gp unsafe.Pointer) unsafe.Pointer {
 	return ((*g) (gp)).kovalParam
 }
 
-func AcqureMutex(gp unsafe.Pointer) {
-	g := (*g) (gp)
-	if g.kovalMutex == nil {
-		g.kovalMutex = &mutex{}
-	}
-	lock(g.kovalMutex)
-}
-
-func ReleaseMutex(gp unsafe.Pointer) {
-	unlock(((*g) (gp)).kovalMutex)
-}
+//func AcqureMutex(gp unsafe.Pointer) {
+//	lock(GetKovalMutex(gp))
+//}
+//
+//func ReleaseMutex(gp unsafe.Pointer) {
+//	unlock(GetKovalMutex(gp))
+//}
+//
+//func GetKovalMutex(gp unsafe.Pointer) *mutex {
+//	g := (*g) (gp)
+//	mp := g.kovalMutex
+//	if mp == nil {
+//		casp(&g.kovalMutex, nil, (unsafe.Pointer) (&mutex{}))
+//		return (*mutex) (g.kovalMutex)
+//	} else {
+//		return (*mutex) (mp)
+//	}
+//}
 
 type m struct {
 	g0      *g     // goroutine with scheduling stack
