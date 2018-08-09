@@ -2661,22 +2661,13 @@ func park_m(gp *g) {
 	schedule()
 }
 
-func ParkSendAndReleaseUnsafe() {
+func ParkUnsafe() {
 	gp := getg()
 	if atomic.Load(&gp.kovalUnparkState) == 2 {
 		atomic.Store(&gp.kovalUnparkState, 0)
 		return
 	}
-	gopark(parkUnsafeFastPath, nil, waitReasonChanSend, traceEvGoBlockSend, 3)
-}
-
-func ParkReceiveAndReleaseUnsafe() {
-	gp := getg()
-	if atomic.Load(&gp.kovalUnparkState) == 2 {
-		atomic.Store(&gp.kovalUnparkState, 0)
-		return
-	}
-	gopark(parkUnsafeFastPath, nil, waitReasonChanReceive, traceEvGoBlockRecv, 3)
+	gopark(parkUnsafeFastPath, nil, waitReasonZero, traceEvNone, 3)
 }
 
 func parkUnsafeFastPath(gp *g, lock unsafe.Pointer) bool {
