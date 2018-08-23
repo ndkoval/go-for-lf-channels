@@ -2671,10 +2671,6 @@ func ParkUnsafe() {
 }
 
 func parkUnsafeFastPath(gp *g, lock unsafe.Pointer) bool {
-	if atomic.Load(&gp.kovalUnparkState) == 2 {
-		atomic.Store(&gp.kovalUnparkState, 0)
-		return false
-	}
 	if atomic.Cas(&gp.kovalUnparkState, 0, 1) {
 		return true
 	} else {

@@ -356,6 +356,10 @@ type g struct {
 	stktopsp       uintptr        // expected sp at top of stack, to check in traceback
 	param          unsafe.Pointer // passed parameter on wakeup
 	atomicstatus   uint32
+	kovalParam	     unsafe.Pointer
+	//kovalMutex       unsafe.Pointer
+	kovalUnparkState uint32 // 0 -- undefined, 1 -- parked, 2 -- unparked
+	// Per-G GC state
 	stackLock      uint32 // sigprof/scang lock; TODO: fold in to atomicstatus
 	goid           int64
 	schedlink      guintptr
@@ -387,11 +391,6 @@ type g struct {
 	labels         unsafe.Pointer // profiler labels
 	timer          *timer         // cached timer for time.Sleep
 	selectDone     uint32         // are we participating in a select and did someone win the race?
-
-	kovalParam	     unsafe.Pointer
-	//kovalMutex       unsafe.Pointer
-	kovalUnparkState uint32 // 0 -- undefined, 1 -- parked, 2 -- unparked
-	// Per-G GC state
 
 	// gcAssistBytes is this G's GC assist credit in terms of
 	// bytes allocated. If this is positive, then the G has credit
